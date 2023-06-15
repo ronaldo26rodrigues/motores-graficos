@@ -2,6 +2,8 @@ import './style.css'
 import * as YUKA from 'yuka';
 import * as THREE from 'three';
 import Box from './box'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { Vector3 } from 'three';
 
 let renderer, scene, camera;
 
@@ -20,8 +22,8 @@ const params = {
 
   scene = new THREE.Scene();
   
-  camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 0.1, 100 );
-  camera.position.set( 5, 6, 5 );
+  camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 100 );
+  camera.position.set( 3, 6, 3 );
   camera.lookAt( scene.position );
   camera.position.set( 6, 6, 6 );
 
@@ -56,19 +58,26 @@ const params = {
   entityManager = new YUKA.EntityManager()
 
   const enemyMesh = new Box({width: 1, height: 1, depth: 1, color: 0x0000ff})
-  // enemyMesh.setPosition({x:2, y:3})
-  enemyMesh.matrixAutoUpdate = false
-  enemyMesh.castShadow = true
-  scene.add(enemyMesh)
+  const loader = new GLTFLoader()
+  // const enemyMesh = null
   const enemy = new YUKA.Vehicle()
   enemy.position.set(4, 6, 0)
   enemy.maxSpeed = 2
-  enemy.setRenderComponent(enemyMesh, sync)
+  loader.load('/Flower.glb', function (gltf) {
+    // const enemyssaMesh = gltf.scene
+    // enemyMesh.material.color.setHex(0xffffff)
+    // enemyMesh.setPosition({x:2, y:3})
+    enemyMesh.matrixAutoUpdate = false
+    enemyMesh.castShadow = true
+    scene.add(enemyMesh)
+    enemy.setRenderComponent(enemyMesh, sync)
+  })
 
   time = new YUKA.Time()
   
   const target = new YUKA.Vector3();
 
+  
   enemy.updateOrientation = false
   const seekBehavior = new YUKA.SeekBehavior(target)
   enemy.steering.add(seekBehavior)
@@ -160,6 +169,16 @@ window.addEventListener('keyup', (event) =>{
       break;
   }
 })
+var mouse = {
+  x:0, y:0
+}
+window.addEventListener('mousemove', (event)=>{
+  mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+  mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+  console.log(mouse)
+})
+
 
 const speed = 0.04
 
@@ -170,9 +189,12 @@ function animate() {
   const deltaTime = time.update().getDelta();
   target.x = cube.position.x
   target.z = cube.position.z
+  
+  cube.lookAt(new Vector3(mouse.x+cube.position.x, cube.position.y, mouse.y-cube.position.y))
   enemy.position.y = cube.position.y
   cube.update(ground)
-  enemyMesh.update(ground)
+  // enemyMesh.update(ground)
+  enemy.lookAt(new YUKA.Vector3(target.x, enemy.position.y, target.z))
   entityManager.update(deltaTime)
   
   cube.velocity.x = 0
