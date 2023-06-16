@@ -169,16 +169,22 @@ window.addEventListener('keyup', (event) =>{
       break;
   }
 })
-var mouse = {
-  x:0, y:0
-}
+var mouse = new THREE.Vector2()
+var plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+var raycaster = new THREE.Raycaster();
+var pointOfIntersection = new THREE.Vector3();
+const cubeh = new Box({width: 0.4, height: 0.4, depth: 0.4, color: 0xff0000});
 window.addEventListener('mousemove', (event)=>{
   mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
   mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-
-  console.log(mouse)
+  raycaster.setFromCamera(mouse, camera);
+  raycaster.ray.intersectPlane(plane, pointOfIntersection);
+  // cubeh.lookAt(pointOfIntersection);
+  cubeh.setPosition({x:pointOfIntersection.x, y: pointOfIntersection.y, z:pointOfIntersection.z})
+  console.log(pointOfIntersection)
 })
 
+scene.add(cubeh)
 
 const speed = 0.04
 
@@ -189,11 +195,16 @@ function animate() {
   const deltaTime = time.update().getDelta();
   target.x = cube.position.x
   target.z = cube.position.z
-  
-  cube.lookAt(new Vector3(mouse.x+cube.position.x, cube.position.y, mouse.y-cube.position.y))
+  const cubeScreenPosition = cube.position.clone().project(camera)
+  // cube.lookAt(new Vector3(cube.position.x+(mouse.x-cubeScreenPosition.x)/2, cube.position.y, cube.position.z-(mouse.y-cubeScreenPosition.y)/2))
+  // cubeh.position.set(new Vector3(1, 1, 1))
+  // cubeh.setPosition({x:cube.position.x+1+(mouse.x-cubeScreenPosition.x)*2, y:cube.position.y, z:cube.position.z-1-(mouse.y-cubeScreenPosition.y)/2})
   enemy.position.y = cube.position.y
+  cube.lookAt(new Vector3(cubeh.position.x, cube.position.y, cubeh.position.z))
+  
   cube.update(ground)
   // enemyMesh.update(ground)
+  
   enemy.lookAt(new YUKA.Vector3(target.x, enemy.position.y, target.z))
   entityManager.update(deltaTime)
   
@@ -215,7 +226,12 @@ function animate() {
     cube.velocity.x += speed
     cube.velocity.z += -speed
   }
-
+  
+  // cubeScreenPosition.x = ( cubeScreenPosition.x + 1) * window.innerWidth / 2;
+  // cubeScreenPosition.y = - ( cubeScreenPosition.y - 1) * window.innerHeight / 2;
+  // cubeScreenPosition.z = 0;
+  // console.log({x: (mouse.x-cubeScreenPosition.x)/2, y: (mouse.y-cubeScreenPosition.y)/2});
+  // cube.position.z-=0.01
 }
 
 function sync( entity, renderComponent ) {
